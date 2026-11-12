@@ -1,12 +1,15 @@
-from core.system_load import make_system
+from system_load import make_system
 from agents import Agent, ModelSettings, Runner
 from openai import AsyncOpenAI
 from agents import OpenAIChatCompletionsModel
+from db_session import DBSession
 
 class AgentsRegistry:
-    def __init__(self, config: dict, tools: list = None):
+    def __init__(self, config: dict, async_session_factory, tools: list = None):
+        self.async_session_factory = async_session_factory
         self.config = config
         self.agents_pool = {}
+        self.session_pool = {}
         self.stream_pool = {}
         self.tools = [] if tools is None else tools
 
@@ -14,8 +17,9 @@ class AgentsRegistry:
         a = self.agents_pool.get(session)
         if a is None:
             a = self.build(session)
+            self.session_pool[session] = DBSession(session_id=session, async_session_factory=self.async_session_factory)
 
-        s = Runner.run_streamed(a, query, context={'pinned_files': pinned_files})
+        s = Runner.run_streamed(a, query, context={'pinned_files': pinned_files}, session=self.session_pool[session])
         self.stream_pool[session] = s
         return s
         
@@ -37,5 +41,10 @@ class AgentsRegistry:
             ),
             model_settings=cfg["model_settings"],
             instructions='Ты бесполезный агент.',
-            tools=self.tools
+
         )
+
+    def delete(self, session):
+        self.session_pool.pop(session, None)
+        self.agents_pool.pop(session, None)
+        self.stream_pool.pop(session, None)

@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException
-from core.database import SessionDep
+from fastapi import APIRouter, HTTPException, Request
+from database import SessionDep
 from schemas import *
 from tables import Session
+from config import ConfigDep
 
 router = APIRouter(prefix="/sessions")
 
@@ -13,8 +14,19 @@ async def get_session(session_id: str, db: SessionDep):
     return res
 
 @router.post("/create/")
-async def create_session(payload: SessionCreate, db: SessionDep):
-    db.add(Session (**payload.model_dump()))
+async def create_session(payload: SessionCreate, db: SessionDep, config: ConfigDep):
+    raw_model = payload.model_dump()
+    
+    if raw_model['model_alias'] is None:
+        raw_model['model_alias'] = config['default']['model_alias']
+    if raw_model['title'] is None:
+        raw_model['title'] = config['default']['title']
+
+    existing = await db.get(Session, payload.id)
+    if existing is not None:
+        raise HTTPException(status_code=409, detail="Session with this id already exists")
+ 
+    db.add(Session (**raw_model))
     await db.commit()
     return {"success": True}
 
@@ -31,10 +43,11 @@ async def put_session(session_id: str, payload: SessionPut, db: SessionDep):
     return {"success": True}
 
 @router.delete("/{session_id}/")
-async def delete_session(session_id: str, db: SessionDep):
+async def delete_session(session_id: str, db: SessionDep, request: Request):
     res = await db.get(Session, session_id)
     if res is None:
         raise HTTPException(status_code=404, detail="session not found")
     await db.delete(res)
+    request.app.state.agent.delete(session_id)
     await db.commit()
     return {"success": True}

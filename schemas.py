@@ -8,10 +8,14 @@ class SessionGet(BaseModel):
     title: str
 
 class SessionPut(BaseModel):
-    title: str | None
-    model_alias: str | None
+    title: str | None = None
+    model_alias: str | None = None
 
 class SessionCreate(BaseModel):
     id: str
-    title: str | None
-    model_alias: str | None
+    title: Optional[str] = None
+    model_alias: Optional[str] = None
+
+class ChatStart(BaseModel):
+    query: str
+
