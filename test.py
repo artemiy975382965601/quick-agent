@@ -9,4 +9,4 @@ async def main():
         async for i in res.stream_events():
             print(i)
 
-asyncio.run(main())
+asyncio.run(main()) 
