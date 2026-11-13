@@ -12,10 +12,8 @@ router = APIRouter(prefix="/chat")
 
 
 @router.post("/{session_id}/start")
-async def start_chat(session_id: str, payload: ChatStart, request: Request, db: SessionDep, config: ConfigDep):
-    raw_model = payload.model_dump()
-    
-    res = request.app.state.agent.start(session_id, [{'role': 'user', 'content': payload.query}], [])
+async def start_chat(session_id: str, payload: ChatStart, request: Request, db: SessionDep, config: ConfigDep):    
+    res = request.app.state.agent.start(session_id, [{'role': 'user', 'content': payload.query}])
 
     async def event_generator():
         async for e in res.stream_events():
@@ -24,7 +22,7 @@ async def start_chat(session_id: str, payload: ChatStart, request: Request, db: 
                     yield {"event": "delta", "data": e.data.delta}
             elif e.type == "run_item_stream_event":
                 if e.name == "tool_called": 
-                    yield {"event": "tool_called", "data": getattr(event.item.raw_item, "name", "Unknown Tool")}
+                    yield {"event": "tool_called", "data": getattr(e.item.raw_item, "name", "Unknown Tool")}
                 elif e.name == "tool_output":
                     yield {"event": "tool_output", "data": str(e.item.output)}
         yield

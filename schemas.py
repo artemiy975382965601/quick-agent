@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
+from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
 
 
 class SessionGet(BaseModel):
