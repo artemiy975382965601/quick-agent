@@ -34,9 +34,7 @@ async def start_chat(session_id: str, payload: ChatStart, request: Request, db: 
 
 
 @router.post("/{session_id}/stop")
-async def start_chat(session_id: str, request: Request, db: SessionDep, config: ConfigDep):
-    raw_model = payload.model_dump()
-    
+async def start_chat(session_id: str, request: Request, db: SessionDep, config: ConfigDep):    
     res = request.app.state.agent.stop(session_id)
 
 

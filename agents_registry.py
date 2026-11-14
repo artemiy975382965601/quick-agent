@@ -3,16 +3,17 @@ from agents import Agent, ModelSettings, Runner
 from openai import AsyncOpenAI
 from agents import OpenAIChatCompletionsModel
 from db_session import DBSession
-from local_tools import local_tools_list
+
 
 class AgentsRegistry:
-    def __init__(self, config: dict, async_session_factory, tools: list = None):
+    def __init__(self, config: dict, async_session_factory, tools: list, mcp_servers: list):
         self.async_session_factory = async_session_factory
         self.config = config
         self.agents_pool = {}
         self.session_pool = {}
         self.stream_pool = {}
-        self.tools = [] if tools is None else tools
+        self.tools = tools
+        self.mcp_servers = mcp_servers
 
     def start(self, session, query):
         a = self.agents_pool.get(session)
@@ -25,7 +26,7 @@ class AgentsRegistry:
         return s
         
     async def stop(self, session):
-        await self.agents_pool[session].cancel()
+        await self.stream_pool[session].cancel()
     
 
     def build(self, session):
@@ -42,11 +43,18 @@ class AgentsRegistry:
             ),
             model_settings=cfg["model_settings"],
             instructions=make_system,
-            tools=local_tools_list
-
+            tools=self.tools,
+            mcp_servers=self.mcp_servers
         )
 
     def delete(self, session):
         self.session_pool.pop(session, None)
         self.agents_pool.pop(session, None)
         self.stream_pool.pop(session, None)
+
+    async def mcp_health(self):
+        async with MCPServerManager(self.servers, connect_in_parallel=True) as manager:
+            return {
+                'active_servers': [s.name for s in manager.active_servers],
+                'failed_servers': [s.name for s in manager.failed_servers]
+            }

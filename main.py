@@ -7,15 +7,25 @@ from database import engine, async_session_factory, SessionDep
 from tables import Base
 from agents_registry import AgentsRegistry
 from config import get_config
+from local_tools import local_tools_list
+from mcp_load import load_mcp_list
+from agents.mcp import MCPServerManager
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    conf = get_config()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    app.state.agent = AgentsRegistry(config=get_config(), async_session_factory=async_session_factory)
+    async with MCPServerManager(load_mcp_list(conf), strict=True) as manager:
+        app.state.agent = AgentsRegistry(
+            config=conf,
+            async_session_factory=async_session_factory, 
+            tools=local_tools_list,
+            mcp_servers=manager.active_servers
+        )
 
-    yield
+        yield
 
     
     await engine.dispose()
