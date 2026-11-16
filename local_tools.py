@@ -2,12 +2,15 @@ from sqlalchemy import select, delete
 from agents import function_tool, RunContextWrapper
 from tables import PinnedFile
 import os
+from typing import Literal
+
 
 
 @function_tool
-async def pin_files(ctx: RunContextWrapper[dict], full_paths: list[str]) -> str:
+async def pin_files(ctx: RunContextWrapper[dict], full_paths: list[str], space_for_insert: Literal["system", "user"]) -> str:
     """
     Прикрепляет файлы. Возвращает отчет, удалось ли прикрепление или нет.
+    space_for_insert позволяет выбрать куда вставятся файлы если это какие то инструкции или шаблоны вставляй их в system, если это какие то файлы над которыми ты работаешь и хочешь чтобы они находились в твоем контексте при изменении вставляй их в user
     """
     parts = []
     async with ctx.context['async_session_factory']() as session:
@@ -15,6 +18,7 @@ async def pin_files(ctx: RunContextWrapper[dict], full_paths: list[str]) -> str:
             if os.path.isfile(path):
                 session.add(PinnedFile(
                     session_id=ctx.context['session_id'],
+                    type_of_inject=space_for_insert,
                     file=path,
                 ))
                 parts.append(f"{path}: was pinned")

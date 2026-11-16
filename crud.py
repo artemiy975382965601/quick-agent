@@ -3,8 +3,17 @@ from database import SessionDep
 from schemas import *
 from tables import Session
 from config import ConfigDep
+from sqlalchemy import select
 
 router = APIRouter(prefix="/sessions")
+
+@router.get("/list/", response_model=list[SessionGet])
+async def get_session(db: SessionDep):
+    stmt = select(Session)
+    res = (await db.scalars(stmt)).all()
+    if res is None:
+        raise HTTPException(status_code=404, detail="sessions not found")
+    return res
 
 @router.get("/{session_id}/", response_model=SessionGet)
 async def get_session(session_id: str, db: SessionDep):
@@ -12,6 +21,8 @@ async def get_session(session_id: str, db: SessionDep):
     if res is None:
         raise HTTPException(status_code=404, detail="session not found")
     return res
+
+
 
 @router.post("/create/")
 async def create_session(payload: SessionCreate, db: SessionDep, config: ConfigDep):

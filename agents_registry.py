@@ -1,4 +1,3 @@
-from system_load import make_system
 from agents import Agent, ModelSettings, Runner
 from openai import AsyncOpenAI
 from agents import OpenAIChatCompletionsModel
@@ -6,7 +5,7 @@ from db_session import DBSession
 
 
 class AgentsRegistry:
-    def __init__(self, config: dict, async_session_factory, tools: list, mcp_servers: list):
+    def __init__(self, config: dict, async_session_factory, tools: list, mcp_servers: list, instructions, run_config):
         self.async_session_factory = async_session_factory
         self.config = config
         self.agents_pool = {}
@@ -14,6 +13,8 @@ class AgentsRegistry:
         self.stream_pool = {}
         self.tools = tools
         self.mcp_servers = mcp_servers
+        self.instructions = instructions
+        self.run_config = run_config
 
     def start(self, session, query):
         a = self.agents_pool.get(session)
@@ -21,14 +22,24 @@ class AgentsRegistry:
             a = self.build(session)
             self.session_pool[session] = DBSession(session_id=session, async_session_factory=self.async_session_factory)
 
-        s = Runner.run_streamed(a, query, context={'session_id': session, 'async_session_factory': self.async_session_factory}, session=self.session_pool[session])
+        s = Runner.run_streamed(
+            a,
+            query, 
+            context={'session_id': session, 'async_session_factory': self.async_session_factory}, 
+            session=self.session_pool[session],
+            run_config=self.run_config
+        )
         self.stream_pool[session] = s
         return s
         
     async def stop(self, session):
-        await self.stream_pool[session].cancel()
-    
-
+        stream = self.stream_pool.pop(session, None)
+        if stream is None:
+            return
+        stream.cancel()
+        async for _ in stream.stream_events():
+            pass
+        
     def build(self, session):
         cfg = self.config["models"]["deepseek"]
         client = AsyncOpenAI(
@@ -42,7 +53,7 @@ class AgentsRegistry:
                 openai_client=client,
             ),
             model_settings=cfg["model_settings"],
-            instructions=make_system,
+            instructions=self.instructions,
             tools=self.tools,
             mcp_servers=self.mcp_servers
         )
@@ -51,10 +62,3 @@ class AgentsRegistry:
         self.session_pool.pop(session, None)
         self.agents_pool.pop(session, None)
         self.stream_pool.pop(session, None)
-
-    async def mcp_health(self):
-        async with MCPServerManager(self.servers, connect_in_parallel=True) as manager:
-            return {
-                'active_servers': [s.name for s in manager.active_servers],
-                'failed_servers': [s.name for s in manager.failed_servers]
-            }

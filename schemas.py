@@ -8,6 +8,7 @@ class SessionGet(BaseModel):
     model_alias: str
     title: str
 
+
 class SessionPut(BaseModel):
     title: str | None = None
     model_alias: str | None = None

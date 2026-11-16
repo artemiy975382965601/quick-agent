@@ -35,8 +35,8 @@ async def start_chat(session_id: str, payload: ChatStart, request: Request, db: 
 
 @router.post("/{session_id}/stop")
 async def start_chat(session_id: str, request: Request, db: SessionDep, config: ConfigDep):    
-    res = request.app.state.agent.stop(session_id)
-
+    res = await request.app.state.agent.stop(session_id)
+    return {"status": "stopped"} 
 
 @router.get("/{session_id}/")
 async def get_chat(session_id: str, db: SessionDep):
@@ -46,6 +46,6 @@ async def get_chat(session_id: str, db: SessionDep):
         .order_by(Message.id)
     )
     db_res = await db.execute(statement=stmt)
-    messages = db_res.scalars().all()
+    messages = db_res.scalars().all() 
     return {'messages': messages}
 

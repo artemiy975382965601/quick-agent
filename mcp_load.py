@@ -16,6 +16,7 @@ def load_mcp_list(config: dict) -> list:
                 cache_tools_list=cfg.get("cache_tools_list", True),
                 tool_filter=cfg.get("tool_filter"),
                 require_approval=cfg.get("require_approval", "never"),
+                client_session_timeout_seconds=None,
             ))
         elif transport == "streamable_http":
             servers.append(MCPServerStreamableHttp(
@@ -27,5 +28,6 @@ def load_mcp_list(config: dict) -> list:
                 cache_tools_list=cfg.get("cache_tools_list", True),
                 tool_filter=cfg.get("tool_filter"),
                 require_approval=cfg.get("require_approval", "never"),
+                client_session_timeout_seconds=None,
             ))
     return servers

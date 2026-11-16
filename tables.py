@@ -21,7 +21,9 @@ class PinnedFile(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     session_id: Mapped[str] = mapped_column(ForeignKey('sessions.id'))
     file: Mapped[str]
+    type_of_inject: Mapped[str]
     sessions: Mapped['Session'] = relationship(back_populates='pinned_files')
+    
 
 class Message(Base):
     __tablename__ = 'messages'
