@@ -105,6 +105,8 @@ def render(event) -> None:
         info = event.error_info()
         print()
         err(f"⚠️ {info.get('code')}: {info.get('message')}")
+        if info.get('detail'):
+            err(str(info['detail'])[:600])
     elif event.kind == 'done':
         return
 

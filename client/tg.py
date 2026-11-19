@@ -227,7 +227,10 @@ async def consume(message: Message, events) -> None:
             await streamer.flush()
             info = event.error_info()
             hint = 'можно повторить' if info.get('retryable') else 'повтор не поможет'
-            await send_plain(message, f"⚠️ {info.get('code')}: {info.get('message')} ({hint})")
+            text = f"⚠️ {info.get('code')}: {info.get('message')} ({hint})"
+            if info.get('detail'):
+                text += f'\n\n{str(info["detail"])[:600]}'
+            await send_plain(message, text)
         elif event.kind == 'done':
             await streamer.flush()
             return

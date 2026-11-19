@@ -22,9 +22,16 @@ def _classify_error(exc: Exception) -> dict:
     if isinstance(exc, APIConnectionError):
         return {'code': 'connection', 'message': 'upstream connection error', 'retryable': True}
     if isinstance(exc, APIStatusError):
+        detail = ''
+        try:
+            body = exc.response.text
+            detail = body[:800]
+        except Exception:
+            detail = str(exc)[:800]
         return {
             'code': 'upstream_error',
             'message': f'upstream status {exc.status_code}',
+            'detail': detail,
             'retryable': exc.status_code >= 500,
         }
     return {'code': 'internal', 'message': 'internal error', 'retryable': False}
