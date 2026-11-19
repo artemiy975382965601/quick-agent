@@ -1,0 +1,11 @@
+agent.db
+agent.db-shm
+agent.db-wal
+config.json
+.env
+env/
+.pyc
+__pycache__
+.qaignore
+.venv/
+venv/
