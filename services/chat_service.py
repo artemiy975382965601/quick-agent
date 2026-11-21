@@ -41,6 +41,26 @@ class ChatService:
             next_cursor=next_cursor,
         )
 
+    async def cancel_answer(self, session_id: str) -> None:
+        """Убирает ответ, оставляя вопрос пользователя на месте."""
+        await self._ensure_session(session_id)
+        if self.agent.is_running(session_id):
+            raise ConflictError('stream is running, stop it first')
+        if await self.uow.messages.rollback_answer(session_id) == 0:
+            raise NotFoundError('nothing to cancel')
+
+    async def retry_answer(self, session_id: str, payload: ChatStart):
+        """Повторяет генерацию на том же вопросе, не добавляя новый."""
+        await self._ensure_session(session_id)
+        if self.agent.is_running(session_id):
+            raise ConflictError('stream is running, stop it first')
+        await self.uow.messages.rollback_answer(session_id)
+        return await self.agent.start(
+            session_id,
+            [],
+            tuple(payload.client_prompt_paths),
+        )
+
     async def clear(self, session_id: str) -> None:
         await self._ensure_session(session_id)
         await self.uow.chat.clear_messages(session_id)

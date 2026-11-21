@@ -61,6 +61,26 @@ class MessageRepository:
         await self._db.flush()
         return result.rowcount or 0
 
+    async def rollback_answer(self, session_id: str) -> int:
+        """Удаляет ответ после последнего вопроса, но сам вопрос оставляет."""
+        stmt = (
+            select(Message.id)
+            .where(Message.session_id == session_id)
+            .where(Message.payload['role'].as_string() == 'user')
+            .order_by(Message.id.desc())
+            .limit(1)
+        )
+        last_user_id = await self._db.scalar(stmt)
+        if last_user_id is None:
+            return 0
+        result = await self._db.execute(
+            delete(Message)
+            .where(Message.session_id == session_id)
+            .where(Message.id > last_user_id)
+        )
+        await self._db.flush()
+        return result.rowcount or 0
+
     async def clear_session(self, session_id: str) -> None:
         stmt = delete(Message).where(Message.session_id == session_id)
         await self._db.execute(stmt)

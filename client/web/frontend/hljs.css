@@ -1,0 +1,42 @@
+/* Подсветка кода в духе Sublime Text / Monokai: яркие цвета, лёгкое свечение */
+.hljs{
+  background:transparent;
+  color:#f8f8f2;
+  font-family:"JetBrains Mono","Fira Code",ui-monospace,"DejaVu Sans Mono",monospace;
+  text-shadow:0 0 14px rgba(248,248,242,.18);
+}
+.hljs-comment,.hljs-quote{color:#7b7a6a;font-style:italic;text-shadow:none}
+
+/* розово-малиновый: ключевые слова, теги, операторы */
+.hljs-keyword,.hljs-selector-tag,.hljs-literal,.hljs-section,.hljs-link,
+.hljs-name,.hljs-tag,.hljs-doctag,.hljs-meta .hljs-keyword{
+  color:#ff4d80;text-shadow:0 0 16px rgba(255,77,128,.18);
+}
+
+/* зелёный: функции */
+.hljs-title,.hljs-title.function_,.hljs-function .hljs-title{
+  color:#a6e22e;text-shadow:0 0 16px rgba(166,226,46,.18);
+}
+
+/* жёлтый: строки и регулярки */
+.hljs-string,.hljs-regexp,.hljs-attr-value{
+  color:#e6db74;text-shadow:0 0 14px rgba(230,219,116,.18);
+}
+
+/* фиолетовый: числа и константы */
+.hljs-number,.hljs-symbol,.hljs-bullet,.hljs-literal.hljs-number{
+  color:#c39cff;text-shadow:0 0 16px rgba(174,129,255,.18);
+}
+
+/* голубой: встроенные функции, атрибуты, типы */
+.hljs-built_in,.hljs-builtin-name,.hljs-type,.hljs-title.class_,.hljs-class .hljs-title,
+.hljs-attr,.hljs-attribute,.hljs-selector-class,.hljs-selector-id{
+  color:#66d9ef;text-shadow:0 0 16px rgba(102,217,239,.18);
+}
+
+.hljs-variable,.hljs-template-variable,.hljs-params{color:#f8f8f2;text-shadow:none}
+.hljs-meta{color:#8d8b7c}
+.hljs-emphasis{font-style:italic}
+.hljs-strong{font-weight:700}
+.hljs-addition{color:#a6e22e}
+.hljs-deletion{color:#ff4d80}

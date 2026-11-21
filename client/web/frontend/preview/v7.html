@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Вариант 7 — карточки с текстом (горизонтально)</title>
+<style>
+  body{margin:0;background:#000;color:#e6e2ef;font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  .wrap{max-width:var(--w,980px);margin:0 auto;padding:24px}
+  h1{font-size:20px;margin:0 0 6px;color:#fff}
+  .hint{color:#8f88a0;font-size:13px;margin:0 0 18px}
+  .toolbar{display:flex;gap:8px;margin-bottom:16px}
+  .toolbar button{background:transparent;border:1px solid rgba(176,107,255,.35);color:#cfc8de;
+    border-radius:9px;padding:7px 12px;font:inherit;font-size:13px;cursor:pointer}
+  .toolbar button:hover{border-color:rgba(176,107,255,.8);color:#fff}
+  .card{border:1px solid rgba(176,107,255,.28);border-radius:14px;padding:18px;overflow-x:auto}
+  .mermaid{text-align:center}
+  .mermaid svg{max-width:100%;height:auto}
+  .mermaid .sub{display:block;font-size:11.5px;color:#8f88a0;margin-top:2px;font-family:inherit}
+  code{font-family:"JetBrains Mono",monospace;font-size:12.5px;color:#9a93a8}
+  details{margin-top:14px}
+  summary{cursor:pointer;color:#8f88a0;font-size:13px}
+  pre{background:transparent;border:1px solid rgba(176,107,255,.2);border-radius:10px;padding:12px;overflow:auto}
+
+  /* принудительно тёмные фигуры: тема mermaid местами отдаёт белый */
+  .mermaid svg .node rect, .mermaid svg .node polygon, .mermaid svg .node circle,
+  .mermaid svg .node ellipse, .mermaid svg rect.actor, .mermaid svg .actor > rect, .mermaid svg .label-container{
+    fill:#0b0d12 !important; stroke:#b06bff !important;
+  }
+  .mermaid svg .actor-man circle, .mermaid svg .actor-man line{fill:#0b0d12 !important; stroke:#b06bff !important}
+  .mermaid svg .cluster rect{fill:transparent !important; stroke:#35d6a5 !important}
+  .mermaid svg .note{fill:rgba(242,193,78,.10) !important; stroke:#f2c14e !important}
+  .mermaid svg .edgePath path, .mermaid svg .messageLine0, .mermaid svg .messageLine1{stroke:#8b83a0 !important}
+  .mermaid svg text, .mermaid svg .label{fill:#e6e2ef !important}
+
+  /* HTML-подписи mermaid наследуют свой цвет — фиксируем явно */
+  .mermaid svg foreignObject div, .mermaid svg .nodeLabel, .mermaid svg .label,
+  .mermaid svg .edgeLabel, .mermaid svg span, .mermaid svg p{
+    color:#e6e2ef !important; background:transparent !important;
+  }
+  .mermaid svg text, .mermaid svg tspan, .mermaid svg text.actor, .mermaid svg .actor text{fill:#e6e2ef !important}
+  .mermaid svg .messageText, .mermaid svg .loopText, .mermaid svg .noteText{fill:#e6e2ef !important}
+  .mermaid svg .sub{color:#8f88a0 !important}
+</style>
+</head><body><div class="wrap" id="wrap">
+<h1>Вариант 7 — карточки с текстом (горизонтально)</h1>
+<p class="hint">То же, но в строку. На телефоне обычно хуже.</p>
+<div class="toolbar">
+  <button onclick="document.getElementById('wrap').style.setProperty('--w','980px')">десктоп 980</button>
+  <button onclick="document.getElementById('wrap').style.setProperty('--w','390px')">телефон 390</button>
+</div>
+<div class="card"><pre class="mermaid">flowchart LR
+  A["Клиент<br/><span class='sub'>браузер, Telegram, CLI</span>"]
+  B["FastAPI<br/><span class='sub'>авторизация, роутеры, SSE</span>"]
+  C["Сервис<br/><span class='sub'>сценарии: старт, отмена, файлы</span>"]
+  A --> B --> C</pre>
+<details><summary>исходник диаграммы</summary><pre><code>flowchart TB
+  A[Клиент] --> B[FastAPI]
+  B --> C[Сервис]
+  C --> D[(SQLite)]
+  C --> E[Агент]</code></pre></details>
+</div>
+<script src="/static/vendor/mermaid.min.js"></script>
+<script src="/static/vendor/mermaid.min.js"></script><script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: "base",
+  securityLevel: "loose",
+  fontFamily: '"JetBrains Mono", ui-monospace, monospace',
+  themeVariables: {
+    background: "transparent",
+    primaryColor: "transparent",
+    primaryTextColor: "#e6e2ef",
+    primaryBorderColor: "#b06bff",
+    secondaryColor: "transparent",
+    secondaryTextColor: "#e6e2ef",
+    secondaryBorderColor: "#35d6a5",
+    tertiaryColor: "transparent",
+    tertiaryTextColor: "#e6e2ef",
+    tertiaryBorderColor: "#f2c14e",
+    lineColor: "#8b83a0",
+    textColor: "#e6e2ef",
+    mainBkg: "transparent",
+    nodeBorder: "#b06bff",
+    clusterBkg: "transparent",
+    clusterBorder: "#35d6a5",
+    edgeLabelBackground: "#0a0c11",
+    fontSize: "15px",
+    actorBkg: "#0a0c11",
+    actorBorder: "#b06bff",
+    actorTextColor: "#e6e2ef",
+    signalColor: "#8b83a0",
+    signalTextColor: "#cfc8de",
+    labelBoxBkgColor: "#0a0c11",
+    labelBoxBorderColor: "#35d6a5",
+    labelTextColor: "#e6e2ef",
+    loopTextColor: "#e6e2ef",
+    noteBkgColor: "rgba(242,193,78,.10)",
+    noteBorderColor: "#f2c14e",
+    noteTextColor: "#f0e8d5"
+  },
+  flowchart: { curve: "basis", nodeSpacing: 42, rankSpacing: 56, padding: 14, useMaxWidth: true },
+  sequence: { actorMargin: 60, boxMargin: 12, messageMargin: 42, useMaxWidth: true }
+});
+</script></body></html>

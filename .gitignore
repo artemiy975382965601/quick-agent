@@ -8,3 +8,15 @@ env/
 __pycache__
 .pyc
 .qaignore
+
+# секреты и локальные базы веб-клиента
+client/web/backend/totp.json
+client/web/backend/sessions.db
+client/web/backend/*.db-wal
+client/web/backend/*.db-shm
+client/web/backend/__pycache__/
+*.log
+
+agent.db
+agent.db-shm
+agent.db-wal

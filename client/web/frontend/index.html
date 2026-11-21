@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b0d">
+<title>quick-agent</title>
+<link rel="stylesheet" href="/static/style.css?v=128">
+<script src="/static/vendor/marked.min.js"></script>
+<script src="/static/vendor/purify.min.js"></script>
+<script src="/static/vendor/highlight.min.js"></script>
+<link rel="stylesheet" href="/static/hljs.css?v=100">
+</head>
+<body>
+
+<!-- вход -->
+<section id="login" class="login hidden">
+  <div class="login-box">
+    <div class="logo">qa</div>
+    <h1>quick-agent</h1>
+    <p class="muted">your agent, anywhere</p>
+    <input id="pass" type="password" placeholder="password" autocomplete="current-password">
+    <input id="totp-code" type="text" inputmode="numeric" placeholder="2FA code" autocomplete="one-time-code" class="hidden">
+    <button id="login-btn" class="primary">Sign in</button>
+    <p id="login-err" class="err"></p>
+  </div>
+</section>
+
+<!-- чаты -->
+<section id="chats" class="screen hidden">
+  <header class="top">
+    <h2>Chats</h2>
+    <button id="new-chat" class="icon-btn" title="New chat">+</button>
+  </header>
+  <div id="chat-list" class="list"></div>
+</section>
+
+<!-- переписка -->
+<section id="chat" class="screen hidden">
+  <header class="top">
+    <button id="back" class="icon-btn">‹</button>
+    <div class="title-wrap">
+      <div id="chat-title" class="title">чат</div>
+    </div>
+    <button id="mode" class="mode-btn" title="Response mode">MD</button>
+    <button id="retry" class="icon-btn" title="Retry" aria-label="Retry">
+      <svg viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+    </button>
+    <button id="stop" class="icon-btn hidden" title="Cancel" aria-label="Cancel">
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+    <button id="chat-menu" class="icon-btn" title="Chat settings" aria-label="Chat settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+    </button>
+  </header>
+  <div id="messages" class="messages"></div>
+  <button id="to-bottom" class="to-bottom hidden" aria-label="Вниз">
+    <svg viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg>
+  </button>
+  <div class="composer">
+    <textarea id="input" rows="1" placeholder="Ask anything"></textarea>
+  </div>
+</section>
+
+<!-- настройки -->
+<section id="settings" class="screen hidden">
+  <header class="top"><h2>Settings</h2></header>
+  <div class="panel">
+    <div class="row"><span>Server</span><span id="srv" class="muted">—</span></div>
+    <div class="row"><span>Chats</span><span id="chats-count" class="muted">—</span></div>
+  </div>
+  <div class="panel">
+    <div class="row"><span>Active sessions</span><span id="sessions-count" class="muted">—</span></div>
+    <div class="row"><span>Two-factor</span><span id="totp-state" class="muted">—</span></div>
+    <button id="totp-setup" class="ghost">Connect authenticator</button>
+    <button id="totp-off" class="ghost hidden">Disable</button>
+    <button id="logout" class="ghost">Sign out</button>
+  </div>
+
+<!-- подключение 2FA -->
+<div id="totp-sheet" class="sheet-wrap hidden">
+  <div class="sheet-backdrop"></div>
+  <div class="sheet modal">
+    <div class="sheet-title">Two-factor</div>
+    <p class="muted small">Отсканируй QR в приложении (Aegis, Google Authenticator, 2FAS) и введи код.</p>
+    <img id="totp-qr" class="totp-qr" alt="QR">
+    <code id="totp-secret" class="totp-secret"></code>
+    <input id="totp-enter" type="text" inputmode="numeric" placeholder="6 цифр">
+    <button id="totp-enable" class="primary">Включить</button>
+    <button id="totp-close" class="ghost">Закрыть</button>
+  </div>
+</div>
+</section>
+
+<!-- меню чата -->
+<div id="sheet" class="sheet-wrap hidden">
+  <div class="sheet-backdrop"></div>
+  <div class="sheet">
+    <div class="sheet-title" id="sheet-title">чат</div>
+    <button class="sheet-item" data-act="rename">
+      <svg viewBox="0 0 24 24"><path d="M4 20h4L20 8l-4-4L4 16v4z"/></svg><span>Rename</span>
+    </button>
+    <button class="sheet-item" data-act="clear">
+      <svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg><span>Clear history</span>
+    </button>
+    <button class="sheet-item" data-act="clone">
+      <svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><span>Clone</span>
+    </button>
+    <button class="sheet-item danger" data-act="delete">
+      <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg><span>Delete chat</span>
+    </button>
+    <button class="sheet-item muted-item" data-act="cancel"><span>Cancel</span></button>
+  </div>
+</div>
+
+<!-- настройки чата -->
+<div id="chat-sheet" class="sheet-wrap hidden">
+  <div class="sheet-backdrop"></div>
+  <div class="sheet tall">
+    <div class="sheet-title">Chat settings</div>
+
+    <div class="cs-block">
+      <input id="cs-name" type="text" placeholder="название чата">
+      <button id="cs-save-name" class="primary small">Save title</button>
+    </div>
+
+    <div class="cs-block">
+      <span class="cs-label">Provider</span>
+      <select id="cs-model" class="cs-select"></select>
+    </div>
+
+    <div class="cs-block">
+      <span class="cs-label">Pinned files</span>
+      <div id="cs-files" class="cs-files"></div>
+      <div class="cs-add">
+        <input id="cs-path" type="text" placeholder="//path/to/file">
+        <select id="cs-space" class="cs-select compact">
+          <option value="user">to user</option>
+          <option value="system">to system</option>
+        </select>
+        <button id="cs-pin" class="ghost small">Pin</button>
+      </div>
+    </div>
+
+    <button id="cs-clone" class="ghost">Clone chat</button>
+    <button id="cs-clear" class="ghost">Clear history</button>
+    <button id="cs-delete" class="danger">Delete chat</button>
+    <button id="cs-close" class="sheet-item muted-item" type="button"><span>Close</span></button>
+  </div>
+</div>
+
+<!-- ввод названия / подтверждение -->
+<div id="modal" class="sheet-wrap hidden">
+  <div class="sheet-backdrop"></div>
+  <div class="sheet modal">
+    <div class="sheet-title" id="modal-title">Название</div>
+    <input id="modal-input" type="text" placeholder="название чата">
+    <p id="modal-text" class="muted hidden"></p>
+    <button id="modal-ok" class="primary">Done</button>
+    <button id="modal-cancel" class="ghost">Cancel</button>
+  </div>
+</div>
+
+<nav id="tabs" class="tabs hidden">
+  <button data-tab="chats" class="tab active">
+    <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Chats</span>
+  </button>
+  <button data-tab="settings" class="tab">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg><span>Settings</span>
+  </button>
+</nav>
+
+<script src="/static/app.js?v=148"></script>
+</body>
+</html>

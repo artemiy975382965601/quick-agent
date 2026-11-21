@@ -40,52 +40,59 @@ def _classify_error(exc: Exception) -> dict:
 @router.post('/{session_id}/start')
 async def start_chat(session_id: str, payload: ChatStart, service: ChatServiceDep):
     res = await service.start(session_id, payload)
+    return EventSourceResponse(_sse(res, session_id, lambda: service.start(session_id, payload)), ping=10)
 
-    async def event_generator():
-        delta_count = 0
-        run = res
-        attempt = 0
-        while True:
-            try:
-                async for e in run.stream_events():
-                    if e.type == 'raw_response_event':
-                        if isinstance(e.data, ResponseTextDeltaEvent):
-                            delta_count += 1
-                            yield {'event': 'delta', 'data': e.data.delta}
-                    elif e.type == 'run_item_stream_event':
-                        if e.name == 'tool_called':
-                            yield {'event': 'tool_called', 'data': getattr(e.item.raw_item, 'name', 'Unknown Tool')}
-                        elif e.name == 'tool_output':
-                            yield {'event': 'tool_output', 'data': str(e.item.output)}
-            except Exception as exc:
-                logger.exception('stream failed for session %s', session_id)
-                classified = _classify_error(exc)
-                # обрыв до первого токена лечится повтором: новый прогон на новом соединении
-                if attempt == 0 and delta_count == 0 and classified['retryable']:
-                    attempt += 1
-                    logger.warning('retrying stream for session %s after %s', session_id, classified['code'])
-                    run = await service.start(session_id, payload)
-                    continue
-                yield {'event': 'error', 'data': json.dumps(classified)}
-                return
-            break
 
-        if delta_count == 0:
-            logger.warning('empty stream for session %s', session_id)
-            yield {
-                'event': 'error',
-                'data': json.dumps({
-                    'code': 'empty_stream',
-                    'message': 'model returned no content',
-                    'retryable': True,
-                }),
-            }
+@router.post('/{session_id}/retry')
+async def retry_chat(session_id: str, service: ChatServiceDep, payload: ChatStart | None = None):
+    """Повторяет последний вопрос заново, не теряя само сообщение пользователя."""
+    payload = payload or ChatStart(query='')
+    res = await service.retry_answer(session_id, payload)
+    return EventSourceResponse(_sse(res, session_id, lambda: service.retry_answer(session_id, payload)), ping=10)
+
+
+async def _sse(run, session_id, restart):
+    delta_count = 0
+    attempt = 0
+    while True:
+        try:
+            async for e in run.stream_events():
+                if e.type == 'raw_response_event':
+                    if isinstance(e.data, ResponseTextDeltaEvent):
+                        delta_count += 1
+                        yield {'event': 'delta', 'data': e.data.delta}
+                elif e.type == 'run_item_stream_event':
+                    if e.name == 'tool_called':
+                        yield {'event': 'tool_called', 'data': getattr(e.item.raw_item, 'name', 'Unknown Tool')}
+                    elif e.name == 'tool_output':
+                        yield {'event': 'tool_output', 'data': str(e.item.output)}
+        except Exception as exc:
+            logger.exception('stream failed for session %s', session_id)
+            classified = _classify_error(exc)
+            # обрыв до первого токена лечится повтором: новый прогон на новом соединении
+            if attempt == 0 and delta_count == 0 and classified['retryable']:
+                attempt += 1
+                logger.warning('retrying stream for session %s after %s', session_id, classified['code'])
+                run = await restart()
+                continue
+            yield {'event': 'error', 'data': json.dumps(classified)}
             return
+        break
 
-        logger.info('stream finished for session %s, deltas: %s', session_id, delta_count)
-        yield {'event': 'done', 'data': 'ok'}
+    if delta_count == 0:
+        logger.warning('empty stream for session %s', session_id)
+        yield {
+            'event': 'error',
+            'data': json.dumps({
+                'code': 'empty_stream',
+                'message': 'model returned no content',
+                'retryable': True,
+            }),
+        }
+        return
 
-    return EventSourceResponse(event_generator(), ping=10)
+    logger.info('stream finished for session %s, deltas: %s', session_id, delta_count)
+    yield {'event': 'done', 'data': 'ok'}
 
 
 @router.post('/{session_id}/stop', response_model=StatusResponse)
@@ -110,5 +117,5 @@ async def clear_chat(session_id: str, service: ChatServiceDep):
 
 @router.post('/{session_id}/cancel', response_model=StatusResponse)
 async def cancel_last(session_id: str, service: ChatServiceDep):
-    await service.cancel_last(session_id)
+    await service.cancel_answer(session_id)
     return StatusResponse(status='cancelled')

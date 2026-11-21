@@ -14,6 +14,8 @@ CONFIG_FILE = CONFIG_DIR / 'config.json'
 MODE_PROMPTS = {
     'cli': ('client_base', 'client_mode_terminal'),
     'tg': ('client_base', 'client_mode_tg'),
+    'web': ('client_base', 'client_mode_web'),
+    'web_html': ('client_base', 'client_mode_web_html'),
 }
 
 DEFAULT_TIMEOUT = 60
